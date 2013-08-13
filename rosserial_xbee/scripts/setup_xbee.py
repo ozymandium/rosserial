@@ -41,7 +41,7 @@ import time
 
 from optparse import OptionParser
 
-#		
+#   
 
 help = """
 %prog [options] port my_adr
@@ -64,90 +64,93 @@ parser.add_option('-C', '--coordinator', action="store_true", dest="coordinator"
 
 
 def send(port, cmd):
-	for c in cmd+'\r':
-		port.write(c)
-		time.sleep(0.06)
-		
+  for c in cmd+'\r':
+    port.write(c)
+    time.sleep(0.06)
+    
 def setAT(port, cmd):
-	port.flushInput()
-	send(port, 'AT'+cmd)
-	rsp = port.readline()
-	print rsp
-	if 'OK' in rsp:
-		return True
-	else :
-		return False
+  port.flushInput()
+  send(port, 'AT'+cmd)
+  rsp = port.readline()
+  print rsp
+  if 'OK' in rsp:
+    return True
+  else :
+    return False
 
 baud_lookup= { 1200   : 0, 
-			   2400   : 1,
-			   4800   : 2,
-			   9600   : 3,
-			   19200  : 4,
-			   38400  : 5,
-			   57600  : 6,
-			   115200 : 7}
+               2400   : 1,
+               4800   : 2,
+               9600   : 3,
+               19200  : 4,
+               38400  : 5,
+               57600  : 6,
+               115200 : 7 }
 
 
-	
+  
 def beginAtMode(port):
-	
-	for i in range(0,3):
-		port.write('+')
-		time.sleep(0.05)
-	time.sleep(1)
-	if port.read(2) == 'OK':
-		return True
-	else :
-		return False
+  
+  for i in range(0,3):
+    # port.write('+')
+    port.write('+')
+    time.sleep(0.05)
+  time.sleep(1)
+  if port.read(2) == 'OK':
+    return True
+  else :
+    return False
 
 if __name__ == '__main__':
-	
-	opts, args = parser.parse_args()
-	
-	if len(args) < 2:
-		print "Not enough arguments!"
-		exit()
-	
-	baud = 57600
-	port_name = args[0]
-	my_address = int(args[1])
+  
+  opts, args = parser.parse_args()
+  
+  if len(args) < 2:
+    print "Not enough arguments!"
+    exit()
+  
+  # baud = 57600
+  baud = 9600
+  port_name = args[0]
+  my_address = int(args[1])
 
-	port = serial.Serial(port_name, baud, timeout=1.5)
-	
-	if beginAtMode(port):
-		print "Connected to the XBee"
-	else:
-		print "Failed to connect to the XBee"
-		exit()
+  port = serial.Serial(port_name, baud, timeout=1.5)
+  
+  if beginAtMode(port):
+    print "Connected to the XBee"
+  else:
+    print "Failed to connect to the XBee"
+    exit()
 
-	
-	cmd = ''
-	if (opts.coordinator):
-		cmd += 'AP2,CE1,' #API mode 2, and enable coordinator
-	
-	cmd += 'MY%d,'%int(args[1]) #set the xbee address
-	cmd += 'BD%d,'%baud_lookup[57600] #set the xbee to interface at 57600 baud
-	cmd += 'ID%d,'%opts.pan_id
-	cmd += 'CH%s,'%opts.channel
-	cmd += 'DL0,'
-	cmd += 'RN1,' #enables collision avoidance on first transmission
-	cmd += 'RO5,' #sets packetization timeout to 5 characters
-	cmd += 'WR' #wrtie the commands to nonvolatile memory
+  
+  cmd = ''
+  if (opts.coordinator):
+    print 'Setting API Mode 2, Enabling coordinator'
+    cmd += 'AP2,CE1,' #API mode 2, and enable coordinator
+  
+  cmd += 'MY%d,'%int(args[1]) #set the xbee address
+  cmd += 'BD%d,'%baud_lookup[57600] #set the xbee to interface at 57600 baud
+  cmd += 'ID%d,'%opts.pan_id # id for the network - determines which radios can communicate
+  # cmd += 'CH%s,'%opts.channel # command invalid for XBeePRO XSC S3B 
+  # cmd += 'DL0,'
+  # cmd += 'RN1,' #enables collision avoidance on first transmission -- re-enable this later.
+  cmd += 'RO5,' #sets packetization timeout to 5 characters
+  cmd += 'WR' #wrtie the commands to nonvolatile memory
 
-		
-	if setAT(port, 'RE'): #reset the xbee
-		print "XBee reset"
-	else:
-		print "Reset failed"
-		exit()
-	beginAtMode(port)
-	time.sleep(1)
-	print "Sending command : ", cmd
+    
+  if setAT(port, 'RE'): #reset the xbee
+    print "XBee reset"
+  else:
+    print "Reset failed"
+    exit()
+  beginAtMode(port)
+  time.sleep(1)
+  print "Sending command : ", cmd
 
-	if setAT(port, cmd):
-		print "XBee sucessfully programed!"
-	else:
-		print "XBee programming failed.  Try again and then investigate using X-CTU"
+  if setAT(port, cmd):
+    print "XBee sucessfully programmed!"
+  else:
+    print "XBee programming failed.  Try again and then investigate using X-CTU"
 
-	
-		
+  
+    
